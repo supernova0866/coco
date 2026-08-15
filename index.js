@@ -6,6 +6,7 @@ const mainDb = require('./db/client');
 const coordDb = require('./db/coordinationClient');
 const { loadResponders } = require('./autoresponders/autoresponder');
 const { deployMissingCommands } = require('./core/commandDeploy');
+require('./ping');
 
 const client = new Client({
   intents: [

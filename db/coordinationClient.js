@@ -1,12 +1,17 @@
 const { createClient } = require('@libsql/client');
 const config = require('../config');
 
-const client = createClient({
-  url: config.tursoCoord.url,
-  authToken: config.tursoCoord.token,
-});
+let client = null;
+if (config.tursoCoord.url) {
+  client = createClient({
+    url: config.tursoCoord.url,
+    authToken: config.tursoCoord.token,
+  });
+}
 
 async function initSchema() {
+  if (!client) return;
+
   await client.execute(`CREATE TABLE IF NOT EXISTS worker_task (
     task_token TEXT PRIMARY KEY,
     worker_id TEXT NOT NULL,

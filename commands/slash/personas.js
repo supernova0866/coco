@@ -11,6 +11,7 @@ const {
 const { logEvent } = require('../../core/webhookLogger');
 
 module.exports = {
+  permKeys: ['personas_switch', 'personas_view'],
   data: new SlashCommandBuilder()
     .setName('personas')
     .setDescription('Bot persona commands')

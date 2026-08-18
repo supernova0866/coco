@@ -2,6 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 const { requireSlashPermission } = require('../../core/slashGuard');
 
 module.exports = {
+  permKeys: ['indicator_set'],
   data: new SlashCommandBuilder()
     .setName('indicator')
     .setDescription('Bot presence indicator commands')

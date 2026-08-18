@@ -3,6 +3,7 @@ const { client: db } = require('../../db/client');
 const { requireSlashPermission } = require('../../core/slashGuard');
 
 module.exports = {
+  permKeys: ['mod_view_warn', 'mod_view_timeout', 'mod_view_ban'],
   data: new SlashCommandBuilder()
     .setName('mod')
     .setDescription('Moderation lookup commands')

@@ -5,6 +5,7 @@ const { ValidationError } = require('../../core/errors');
 const { logEvent } = require('../../core/webhookLogger');
 
 module.exports = {
+  permKeys: ['status_list', 'status_add', 'status_remove', 'status_edit'],
   data: new SlashCommandBuilder()
     .setName('status')
     .setDescription('Rotating bot status commands')

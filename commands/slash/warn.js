@@ -5,6 +5,7 @@ const { requireSlashPermission } = require('../../core/slashGuard');
 const { ValidationError } = require('../../core/errors');
 
 module.exports = {
+  permKeys: ['warn'],
   data: new SlashCommandBuilder()
     .setName('warn')
     .setDescription('Warn a user')

@@ -6,6 +6,7 @@ const mainDb = require('./db/client');
 const coordDb = require('./db/coordinationClient');
 const { loadResponders } = require('./autoresponders/autoresponder');
 const { deployMissingCommands } = require('./core/commandDeploy');
+const { seedPermissionRows } = require('./core/permSeeder');
 require('./ping');
 
 const client = new Client({
@@ -65,6 +66,7 @@ function loadEvents() {
   loadEvents();
   loadResponders();
 
+  await seedPermissionRows(client);
   await deployMissingCommands(client);
 
   await client.login(config.discordToken);

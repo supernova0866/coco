@@ -21,7 +21,7 @@ async function initSchema() {
 
   await client.execute(`CREATE TABLE IF NOT EXISTS action_gates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    channel_id TEXT NOT NULL,
+    channel_id TEXT,
     contains TEXT,
     action TEXT,
     subaction TEXT,

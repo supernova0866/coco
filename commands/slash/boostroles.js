@@ -152,6 +152,7 @@ async function handleDelete(interaction) {
 }
 
 module.exports = {
+  permKeys: ['boostroles_create', 'boostroles_edit', 'boostroles_share', 'boostroles_view', 'boostroles_delete'],
   data: new SlashCommandBuilder()
     .setName('boostroles')
     .setDescription('Booster custom role commands')

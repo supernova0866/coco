@@ -20,7 +20,7 @@ async function initSchema() {
   )`);
 
   await client.execute(`CREATE TABLE IF NOT EXISTS action_gates (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     channel_id TEXT,
     contains TEXT,
     action TEXT,
@@ -118,7 +118,7 @@ async function initSchema() {
   )`);
 
   await client.execute(`CREATE TABLE IF NOT EXISTS bot_statuses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY,
     text TEXT NOT NULL,
     activity_type TEXT NOT NULL,
     position INTEGER NOT NULL,

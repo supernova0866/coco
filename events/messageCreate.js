@@ -1,12 +1,16 @@
 const { handleMessage } = require('../core/router');
 const { evaluateGates } = require('../actiongates/engine');
 const { evaluateAutoresponders } = require('../autoresponders/autoresponder');
+const { handlePokemonHint } = require('../pokemon/pokemonListener');
 
 module.exports = {
   name: 'messageCreate',
   once: false,
   async execute(message, client) {
-    if (message.author.bot) return;
+    if (message.author.bot) {
+      await handlePokemonHint(message).catch((err) => console.error(err));
+      return;
+    }
 
     const gateResult = await evaluateGates(message).catch((err) => {
       console.error(err);

@@ -1,4 +1,5 @@
 require('dotenv').config();
+const fileConfig = require('./config.json');
 
 const required = [
   'DISCORD_TOKEN',
@@ -11,6 +12,14 @@ const required = [
 for (const key of required) {
   if (!process.env[key]) {
     throw new Error(`Missing required env var: ${key}`);
+  }
+}
+
+const requiredFileKeys = ['GUILD_ID', 'POKE2_CHANNEL_ID'];
+
+for (const key of requiredFileKeys) {
+  if (!fileConfig[key]) {
+    throw new Error(`Missing required key in config.json: ${key}`);
   }
 }
 
@@ -28,4 +37,6 @@ module.exports = {
   },
   workerHmacSecret: process.env.WORKER_HMAC_SECRET,
   logWebhookUrl: process.env.LOG_WEBHOOK_URL || null,
+  guildId: fileConfig.GUILD_ID,
+  poke2ChannelId: fileConfig.POKE2_CHANNEL_ID,
 };

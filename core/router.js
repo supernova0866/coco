@@ -10,7 +10,7 @@ const { runBanFlow } = require('./banFlow');
 const { PermissionError, ValidationError, NoTargetError } = require('./errors');
 const { randomTitle } = require('./powerFlexTitles');
 
-const { muteUser } = require('../moderation/muteUser');
+const { muteUser, MAX_TIMEOUT_SECONDS } = require('../moderation/muteUser');
 const { unbanUser } = require('../moderation/unbanUser');
 const { unmuteUser } = require('../moderation/unmuteUser');
 const { kickUser } = require('../moderation/kickUser');
@@ -74,14 +74,16 @@ async function runNativeCommand(message, client, commandName, args, prefix) {
     if (commandName === 'mute') {
       const { targetId, reason: firstPass } = await resolveTarget(message, args);
       const remaining = firstPass.split(/\s+/);
-      const durationToken = remaining[0];
-      const durationSeconds = parseDuration(durationToken);
-      if (!durationSeconds) {
-        throw new ValidationError('Duration is required, format like 2d, 6h, 30m.');
-      }
-      const reason = remaining.slice(1).join(' ') || 'No reason provided.';
+      const parsedDuration = parseDuration(remaining[0]);
+
+      // No valid duration token (missing or unparseable) defaults to Discord's own timeout
+      // ceiling, rather than rejecting the command. The whole remainder is then the reason.
+      const durationSeconds = parsedDuration || MAX_TIMEOUT_SECONDS;
+      const reason = (parsedDuration ? remaining.slice(1).join(' ') : firstPass) || 'No reason provided.';
+      const durationLabel = parsedDuration ? remaining[0] : '28d (default)';
+
       const id = await muteUser(message.guild, targetId, reason, durationSeconds, message.author.id);
-      await message.reply(`Muted <@${targetId}> (${id}) for ${durationToken}.`);
+      await message.reply(`Muted <@${targetId}> (${id}) for ${durationLabel}.`);
       await setStatus(message, 'success');
       return;
     }

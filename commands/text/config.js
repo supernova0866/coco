@@ -110,41 +110,46 @@ module.exports = {
     const collector = panel.createMessageComponentCollector({ time: 5 * 60 * 1000 });
 
     collector.on('collect', async (interaction) => {
-      if (interaction.user.id !== message.author.id) {
-        await interaction.reply({ content: 'This is not your panel.', ephemeral: true });
-        return;
+      try {
+        if (interaction.user.id !== message.author.id) {
+          await interaction.reply({ content: 'This is not your panel.', ephemeral: true });
+          return;
+        }
+
+        const key = interaction.customId.replace('config_edit_', '');
+        const currentValues = await fetchAllConfig();
+
+        await interaction.showModal(buildModal(key, currentValues[key]));
+
+        const modalSubmit = await interaction
+          .awaitModalSubmit({
+            filter: (i) => i.customId === `config_modal_${key}` && i.user.id === message.author.id,
+            time: 2 * 60 * 1000,
+          })
+          .catch(() => null);
+        if (!modalSubmit) return;
+
+        const rawInput = modalSubmit.fields.getTextInputValue('value');
+        const result = await validateAndFormat(message.guild, key, rawInput);
+
+        if (!result.ok) {
+          await modalSubmit.reply({ content: result.error, ephemeral: true });
+          return;
+        }
+
+        await db.execute({
+          sql: `INSERT INTO config (config_name, value) VALUES (?, ?)
+                ON CONFLICT(config_name) DO UPDATE SET value = excluded.value`,
+          args: [key, result.value],
+        });
+
+        const updatedValues = await fetchAllConfig();
+        await panel.edit({ components: [buildContainer(updatedValues)], flags: MessageFlags.IsComponentsV2 });
+        await modalSubmit.reply({ content: `${CONFIG_SCHEMA[key].label} updated.`, ephemeral: true });
+      } catch (err) {
+        console.error(err);
+        await interaction.followUp({ content: 'Something went wrong running that.', ephemeral: true }).catch(() => {});
       }
-
-      const key = interaction.customId.replace('config_edit_', '');
-      const currentValues = await fetchAllConfig();
-
-      await interaction.showModal(buildModal(key, currentValues[key]));
-
-      const modalSubmit = await interaction
-        .awaitModalSubmit({
-          filter: (i) => i.customId === `config_modal_${key}` && i.user.id === message.author.id,
-          time: 2 * 60 * 1000,
-        })
-        .catch(() => null);
-      if (!modalSubmit) return;
-
-      const rawInput = modalSubmit.fields.getTextInputValue('value');
-      const result = await validateAndFormat(message.guild, key, rawInput);
-
-      if (!result.ok) {
-        await modalSubmit.reply({ content: result.error, ephemeral: true });
-        return;
-      }
-
-      await db.execute({
-        sql: `INSERT INTO config (config_name, value) VALUES (?, ?)
-              ON CONFLICT(config_name) DO UPDATE SET value = excluded.value`,
-        args: [key, result.value],
-      });
-
-      const updatedValues = await fetchAllConfig();
-      await panel.edit({ components: [buildContainer(updatedValues)], flags: MessageFlags.IsComponentsV2 });
-      await modalSubmit.reply({ content: `${CONFIG_SCHEMA[key].label} updated.`, ephemeral: true });
     });
   },
 };

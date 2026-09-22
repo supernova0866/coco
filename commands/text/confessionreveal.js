@@ -22,6 +22,18 @@ module.exports = {
       return;
     }
 
-    await message.reply(`Confession #${id} was sent by <@${row.author_id}>.`);
+    if (!row.revealed_by) {
+      await db.execute({
+        sql: 'UPDATE confessions SET revealed_by = ?, revealed_at = ? WHERE id = ?',
+        args: [message.author.id, Date.now(), id],
+      });
+      await message.reply(`Confession #${id} was sent by <@${row.author_id}>.`);
+      return;
+    }
+
+    await message.reply(
+      `Confession #${id} was sent by <@${row.author_id}>.\n` +
+        `This confession was first revealed by <@${row.revealed_by}>.`
+    );
   },
 };

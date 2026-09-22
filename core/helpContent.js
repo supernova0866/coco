@@ -52,6 +52,7 @@ const textSections = [
       { usage: 'unban <user> <reason>', description: 'Unban a user.' },
       { usage: 'unmute <user> <reason>', description: 'Remove a timeout.' },
       { usage: 'kick <user> <reason>', description: 'Kick a user.' },
+      { usage: 'warn <user> <duration> <reason>', description: 'Warn a user.' },
     ],
   },
   {

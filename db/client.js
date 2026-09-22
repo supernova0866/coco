@@ -6,6 +6,14 @@ const client = createClient({
   authToken: config.turso.token,
 });
 
+async function ensureColumn(table, column, definition) {
+  const info = await client.execute(`PRAGMA table_info(${table})`);
+  const exists = info.rows.some((row) => row.name === column);
+  if (!exists) {
+    await client.execute(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
+
 async function initSchema() {
   await client.execute(`CREATE TABLE IF NOT EXISTS config (
     config_name TEXT PRIMARY KEY,
@@ -40,8 +48,15 @@ async function initSchema() {
     purged INTEGER DEFAULT 0,
     purge_reason TEXT,
     purged_by TEXT,
-    purged_at INTEGER
+    purged_at INTEGER,
+    revealed_by TEXT,
+    revealed_at INTEGER
   )`);
+
+  // Existing deployments already have a confessions table without these columns.
+  // CREATE TABLE IF NOT EXISTS above is a no-op for them, so add the columns directly.
+  await ensureColumn('confessions', 'revealed_by', 'TEXT');
+  await ensureColumn('confessions', 'revealed_at', 'INTEGER');
 
   await client.execute(`CREATE TABLE IF NOT EXISTS confession_viewers (
     user_id TEXT PRIMARY KEY

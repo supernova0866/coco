@@ -107,76 +107,86 @@ module.exports = {
 
     const listCollector = listMsg.createMessageComponentCollector({ time: 30 * 60 * 1000 });
     listCollector.on('collect', async (interaction) => {
-      if (interaction.user.id !== invokerId) {
-        await interaction.reply({ content: 'This is not your panel.', ephemeral: true });
-        return;
-      }
+      try {
+        if (interaction.user.id !== invokerId) {
+          await interaction.reply({ content: 'This is not your panel.', ephemeral: true });
+          return;
+        }
 
-      const gateId = Number(interaction.customId.replace('gate_view_edit_', ''));
-      const gate = await fetchGate(gateId);
-      if (!gate) {
-        await interaction.reply({ content: 'That gate no longer exists.', ephemeral: true });
-        return;
-      }
+        const gateId = Number(interaction.customId.replace('gate_view_edit_', ''));
+        const gate = await fetchGate(gateId);
+        if (!gate) {
+          await interaction.reply({ content: 'That gate no longer exists.', ephemeral: true });
+          return;
+        }
 
-      await interaction.deferUpdate();
-      const panel = await message.channel.send({
-        components: [buildGatePanelContainer(gate)],
-        flags: MessageFlags.IsComponentsV2,
-      });
-      attachPanelCollector(panel, invokerId, gateId, message.guild);
+        await interaction.deferUpdate();
+        const panel = await message.channel.send({
+          components: [buildGatePanelContainer(gate)],
+          flags: MessageFlags.IsComponentsV2,
+        });
+        attachPanelCollector(panel, invokerId, gateId, message.guild);
+      } catch (err) {
+        console.error(err);
+        await interaction.followUp({ content: 'Something went wrong running that.', ephemeral: true }).catch(() => {});
+      }
     });
 
     const navCollector = navMsg.createMessageComponentCollector({ time: 30 * 60 * 1000 });
     navCollector.on('collect', async (interaction) => {
-      if (interaction.user.id !== invokerId) {
-        await interaction.reply({ content: 'This is not your panel.', ephemeral: true });
-        return;
-      }
-
-      const parts = interaction.customId.split('_');
-      const action = parts[1];
-      const currentPage = Number(parts[3]);
-
-      if (action === 'jump') {
-        const modal = new ModalBuilder()
-          .setCustomId(`agview_jumpmodal_${listMsg.id}`)
-          .setTitle('Jump to page')
-          .addComponents(
-            new ActionRowBuilder().addComponents(
-              new TextInputBuilder()
-                .setCustomId('page')
-                .setLabel('Page number')
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-            )
-          );
-        await interaction.showModal(modal);
-
-        const submit = await interaction
-          .awaitModalSubmit({
-            filter: (i) => i.customId === `agview_jumpmodal_${listMsg.id}` && i.user.id === invokerId,
-            time: 60 * 1000,
-          })
-          .catch(() => null);
-        if (!submit) return;
-
-        const requested = Number(submit.fields.getTextInputValue('page'));
-        const totalNow = Math.max(1, Math.ceil((await countGates()) / PAGE_SIZE));
-        if (!Number.isInteger(requested) || requested < 1 || requested > totalNow) {
-          await submit.reply({ content: `Enter a page between 1 and ${totalNow}.`, ephemeral: true });
+      try {
+        if (interaction.user.id !== invokerId) {
+          await interaction.reply({ content: 'This is not your panel.', ephemeral: true });
           return;
         }
 
-        await applyPage(requested);
-        await submit.reply({ content: `Jumped to page ${requested}.`, ephemeral: true });
-        return;
-      }
+        const parts = interaction.customId.split('_');
+        const action = parts[1];
+        const currentPage = Number(parts[3]);
 
-      const totalNow = Math.max(1, Math.ceil((await countGates()) / PAGE_SIZE));
-      const newPage = action === 'prev' ? Math.max(1, currentPage - 1) : Math.min(totalNow, currentPage + 1);
-      await interaction.deferUpdate();
-      await applyPage(newPage);
+        if (action === 'jump') {
+          const modal = new ModalBuilder()
+            .setCustomId(`agview_jumpmodal_${listMsg.id}`)
+            .setTitle('Jump to page')
+            .addComponents(
+              new ActionRowBuilder().addComponents(
+                new TextInputBuilder()
+                  .setCustomId('page')
+                  .setLabel('Page number')
+                  .setStyle(TextInputStyle.Short)
+                  .setRequired(true)
+              )
+            );
+          await interaction.showModal(modal);
+
+          const submit = await interaction
+            .awaitModalSubmit({
+              filter: (i) => i.customId === `agview_jumpmodal_${listMsg.id}` && i.user.id === invokerId,
+              time: 60 * 1000,
+            })
+            .catch(() => null);
+          if (!submit) return;
+
+          const requested = Number(submit.fields.getTextInputValue('page'));
+          const totalNow = Math.max(1, Math.ceil((await countGates()) / PAGE_SIZE));
+          if (!Number.isInteger(requested) || requested < 1 || requested > totalNow) {
+            await submit.reply({ content: `Enter a page between 1 and ${totalNow}.`, ephemeral: true });
+            return;
+          }
+
+          await applyPage(requested);
+          await submit.reply({ content: `Jumped to page ${requested}.`, ephemeral: true });
+          return;
+        }
+
+        const totalNow = Math.max(1, Math.ceil((await countGates()) / PAGE_SIZE));
+        const newPage = action === 'prev' ? Math.max(1, currentPage - 1) : Math.min(totalNow, currentPage + 1);
+        await interaction.deferUpdate();
+        await applyPage(newPage);
+      } catch (err) {
+        console.error(err);
+        await interaction.followUp({ content: 'Something went wrong running that.', ephemeral: true }).catch(() => {});
+      }
     });
   },
 };

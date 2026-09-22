@@ -93,66 +93,71 @@ function attachPanelCollector(panelMessage, invokerId, gateId, guild) {
   const collector = panelMessage.createMessageComponentCollector({ time: 30 * 60 * 1000 });
 
   collector.on('collect', async (interaction) => {
-    if (interaction.user.id !== invokerId) {
-      await interaction.reply({ content: 'This is not your panel.', ephemeral: true });
-      return;
-    }
-
-    const gate = await fetchGate(gateId);
-    if (!gate) {
-      await interaction.reply({ content: 'This gate no longer exists.', ephemeral: true });
-      return;
-    }
-
-    if (interaction.customId === `gate_detection_${gateId}`) {
-      await interaction.showModal(buildDetectionModal(gate));
-      const submit = await interaction
-        .awaitModalSubmit({
-          filter: (i) => i.customId === `gate_detection_modal_${gateId}` && i.user.id === invokerId,
-          time: 2 * 60 * 1000,
-        })
-        .catch(() => null);
-      if (!submit) return;
-
-      const channelId = submit.fields.getTextInputValue('channel_id');
-      const contains = submit.fields.getTextInputValue('contains');
-      const channel = await guild.channels.fetch(channelId).catch(() => null);
-      if (!channel) {
-        await submit.reply({ content: 'That channel ID could not be found.', ephemeral: true });
+    try {
+      if (interaction.user.id !== invokerId) {
+        await interaction.reply({ content: 'This is not your panel.', ephemeral: true });
         return;
       }
 
-      await db.execute({
-        sql: 'UPDATE action_gates SET channel_id = ?, contains = ? WHERE id = ?',
-        args: [channelId, contains, gateId],
-      });
+      const gate = await fetchGate(gateId);
+      if (!gate) {
+        await interaction.reply({ content: 'This gate no longer exists.', ephemeral: true });
+        return;
+      }
 
-      const updated = await fetchGate(gateId);
-      await panelMessage.edit({ components: [buildGatePanelContainer(updated)], flags: MessageFlags.IsComponentsV2 });
-      await submit.reply({ content: 'Detection updated.', ephemeral: true });
-    }
+      if (interaction.customId === `gate_detection_${gateId}`) {
+        await interaction.showModal(buildDetectionModal(gate));
+        const submit = await interaction
+          .awaitModalSubmit({
+            filter: (i) => i.customId === `gate_detection_modal_${gateId}` && i.user.id === invokerId,
+            time: 2 * 60 * 1000,
+          })
+          .catch(() => null);
+        if (!submit) return;
 
-    if (interaction.customId === `gate_actions_${gateId}`) {
-      await interaction.showModal(buildActionsModal(gate));
-      const submit = await interaction
-        .awaitModalSubmit({
-          filter: (i) => i.customId === `gate_actions_modal_${gateId}` && i.user.id === invokerId,
-          time: 2 * 60 * 1000,
-        })
-        .catch(() => null);
-      if (!submit) return;
+        const channelId = submit.fields.getTextInputValue('channel_id');
+        const contains = submit.fields.getTextInputValue('contains');
+        const channel = await guild.channels.fetch(channelId).catch(() => null);
+        if (!channel) {
+          await submit.reply({ content: 'That channel ID could not be found.', ephemeral: true });
+          return;
+        }
 
-      const action = submit.fields.getTextInputValue('action') || null;
-      const subaction = submit.fields.getTextInputValue('subaction') || null;
+        await db.execute({
+          sql: 'UPDATE action_gates SET channel_id = ?, contains = ? WHERE id = ?',
+          args: [channelId, contains, gateId],
+        });
 
-      await db.execute({
-        sql: 'UPDATE action_gates SET action = ?, subaction = ? WHERE id = ?',
-        args: [action, subaction, gateId],
-      });
+        const updated = await fetchGate(gateId);
+        await panelMessage.edit({ components: [buildGatePanelContainer(updated)], flags: MessageFlags.IsComponentsV2 });
+        await submit.reply({ content: 'Detection updated.', ephemeral: true });
+      }
 
-      const updated = await fetchGate(gateId);
-      await panelMessage.edit({ components: [buildGatePanelContainer(updated)], flags: MessageFlags.IsComponentsV2 });
-      await submit.reply({ content: 'Actions updated.', ephemeral: true });
+      if (interaction.customId === `gate_actions_${gateId}`) {
+        await interaction.showModal(buildActionsModal(gate));
+        const submit = await interaction
+          .awaitModalSubmit({
+            filter: (i) => i.customId === `gate_actions_modal_${gateId}` && i.user.id === invokerId,
+            time: 2 * 60 * 1000,
+          })
+          .catch(() => null);
+        if (!submit) return;
+
+        const action = submit.fields.getTextInputValue('action') || null;
+        const subaction = submit.fields.getTextInputValue('subaction') || null;
+
+        await db.execute({
+          sql: 'UPDATE action_gates SET action = ?, subaction = ? WHERE id = ?',
+          args: [action, subaction, gateId],
+        });
+
+        const updated = await fetchGate(gateId);
+        await panelMessage.edit({ components: [buildGatePanelContainer(updated)], flags: MessageFlags.IsComponentsV2 });
+        await submit.reply({ content: 'Actions updated.', ephemeral: true });
+      }
+    } catch (err) {
+      console.error(err);
+      await interaction.followUp({ content: 'Something went wrong running that.', ephemeral: true }).catch(() => {});
     }
   });
 }

@@ -1,7 +1,18 @@
 const { client } = require('../db/client');
 const { generateUniqueId } = require('../core/idGenerator');
+const { ValidationError } = require('../core/errors');
+
+// Discord rejects a timeout longer than 28 days.
+const MAX_TIMEOUT_SECONDS = 28 * 86400;
 
 async function muteUser(guild, targetId, reason, durationSeconds, moderatorId) {
+  if (!durationSeconds || durationSeconds <= 0) {
+    throw new ValidationError('Mute duration must be greater than zero.');
+  }
+  if (durationSeconds > MAX_TIMEOUT_SECONDS) {
+    throw new ValidationError('Mute duration cannot exceed 28 days.');
+  }
+
   const id = await generateUniqueId('timeouts');
   const member = await guild.members.fetch(targetId);
   await member.timeout(durationSeconds * 1000, reason);
@@ -16,4 +27,4 @@ async function muteUser(guild, targetId, reason, durationSeconds, moderatorId) {
   return id;
 }
 
-module.exports = { muteUser };
+module.exports = { muteUser, MAX_TIMEOUT_SECONDS };

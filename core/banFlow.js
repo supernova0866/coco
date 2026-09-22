@@ -28,22 +28,34 @@ async function runBanFlow({ channel, guild, targetId, reason, invokerId, statusM
   const collector = panel.createMessageComponentCollector({ time: 60000 });
 
   collector.on('collect', async (interaction) => {
-    if (interaction.user.id !== invokerId) {
-      await interaction.reply({ content: 'This is not your menu.', ephemeral: true });
-      return;
+    try {
+      if (interaction.user.id !== invokerId) {
+        await interaction.reply({ content: 'This is not your menu.', ephemeral: true });
+        return;
+      }
+
+      const deleteMessageSeconds = Number(interaction.values[0]);
+      const option = DELETE_OPTIONS.find((o) => o.value === interaction.values[0]);
+
+      await banUser(guild, targetId, reason, invokerId, deleteMessageSeconds);
+      await interaction.update({
+        content: `User banned\nDeleted messages for past ${option.name}`,
+        components: [],
+      });
+
+      if (statusMessage) await setStatus(statusMessage, 'success');
+      collector.stop('done');
+    } catch (err) {
+      console.error(err);
+      const payload = { content: 'Something went wrong running that.', components: [] };
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content: payload.content, ephemeral: true }).catch(() => {});
+      } else {
+        await interaction.update(payload).catch(() => {});
+      }
+      if (statusMessage) await setStatus(statusMessage, 'error');
+      collector.stop('error');
     }
-
-    const deleteMessageSeconds = Number(interaction.values[0]);
-    const option = DELETE_OPTIONS.find((o) => o.value === interaction.values[0]);
-
-    await banUser(guild, targetId, reason, invokerId, deleteMessageSeconds);
-    await interaction.update({
-      content: `User banned\nDeleted messages for past ${option.name}`,
-      components: [],
-    });
-
-    if (statusMessage) await setStatus(statusMessage, 'success');
-    collector.stop('done');
   });
 
   collector.on('end', async (collected, reason) => {

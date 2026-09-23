@@ -16,7 +16,7 @@ function buildReply(matches) {
 
 async function handlePokemonHint(message) {
   if (!POKETWO_IDS.includes(message.author.id)) return;
-  if (message.channelId !== config.poke2ChannelId) return;
+  if (!config.poke2ChannelId.includes(message.channelId)) return;
 
   const hint = parseHint(message.content);
   if (!hint) return;

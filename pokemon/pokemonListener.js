@@ -1,7 +1,7 @@
 const config = require('../config');
 const { parseHint, findMatches } = require('./hintMatcher');
 
-const POKETWO_ID = '716390085896962058';
+const POKETWO_IDS = ['716390085896962058', '875703615099134013'];
 
 const NO_MATCH_MESSAGE =
   'No Match Found.\n' +
@@ -15,7 +15,7 @@ function buildReply(matches) {
 }
 
 async function handlePokemonHint(message) {
-  if (message.author.id !== POKETWO_ID) return;
+  if (!POKETWO_IDS.includes(message.author.id)) return;
   if (message.channelId !== config.poke2ChannelId) return;
 
   const hint = parseHint(message.content);

@@ -23,6 +23,10 @@ for (const key of requiredFileKeys) {
   }
 }
 
+if (!Array.isArray(fileConfig.POKE2_CHANNEL_ID) || fileConfig.POKE2_CHANNEL_ID.length === 0) {
+  throw new Error('POKE2_CHANNEL_ID must be a non-empty array in config.json');
+}
+
 module.exports = {
   discordToken: process.env.DISCORD_TOKEN,
   clientId: process.env.DISCORD_CLIENT_ID,

@@ -1,7 +1,7 @@
 const config = require('../config');
 const { parseHint, findMatches } = require('./hintMatcher');
 
-const POKETWO_IDS = ['716390085896962058', '875703615099134013'];
+const POKETWO_IDS = ['716390085896962058', '1552370306549551145'];
 
 const NO_MATCH_MESSAGE =
   'No Match Found.\n' +

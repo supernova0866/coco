@@ -11,20 +11,27 @@ const {
   MessageFlags,
 } = require('discord.js');
 const { client: db } = require('../../db/client');
+const { MIN_BET, DEFAULT_MAX_BET, loadSettings } = require('../../economy/gambling/settings');
 
 const CONFIG_SCHEMA = {
   confession_channel_id: { label: 'Confession Channel', type: 'channel' },
   booster_role_id: { label: 'Booster Role', type: 'role' },
   booster_role_position_reference_id: { label: 'Booster Role Position Reference', type: 'role' },
   prefixes: { label: 'Prefixes', type: 'list' },
+  max_bet: { label: 'Max Bet', type: 'number', min: MIN_BET, max: 9999999, default: DEFAULT_MAX_BET },
 };
 
 function displayValue(key, raw) {
-  if (!raw) return 'Not set';
-  const type = CONFIG_SCHEMA[key].type;
+  const schema = CONFIG_SCHEMA[key];
+  if (!raw) {
+    if (schema.default !== undefined) return `${schema.default.toLocaleString('en-US')} (default)`;
+    return 'Not set';
+  }
+  const type = schema.type;
   if (type === 'channel') return `<#${raw}>`;
   if (type === 'role') return `<@&${raw}>`;
   if (type === 'list') return JSON.parse(raw).join(', ');
+  if (type === 'number') return Number(raw).toLocaleString('en-US');
   return raw;
 }
 
@@ -54,16 +61,24 @@ function buildContainer(values) {
   return container;
 }
 
+function inputLabel(schema) {
+  if (schema.type === 'list') return `${schema.label} IDs (comma separated)`;
+  if (schema.type === 'number') return `${schema.label} (${schema.min} to ${schema.max})`;
+  return `${schema.label} ID`;
+}
+
 function buildModal(key, currentRaw) {
   const schema = CONFIG_SCHEMA[key];
   const input = new TextInputBuilder()
     .setCustomId('value')
-    .setLabel(`${schema.label} ID${schema.type === 'list' ? 's (comma separated)' : ''}`)
+    .setLabel(inputLabel(schema))
     .setStyle(TextInputStyle.Short)
     .setRequired(true);
 
   if (currentRaw) {
     input.setValue(schema.type === 'list' ? JSON.parse(currentRaw).join(',') : currentRaw);
+  } else if (schema.default !== undefined) {
+    input.setValue(String(schema.default));
   }
 
   return new ModalBuilder()
@@ -91,6 +106,16 @@ async function validateAndFormat(guild, key, rawInput) {
     const list = rawInput.split(',').map((s) => s.trim()).filter(Boolean);
     if (list.length === 0) return { ok: false, error: 'Provide at least one value.' };
     return { ok: true, value: JSON.stringify(list) };
+  }
+
+  if (schema.type === 'number') {
+    const trimmed = rawInput.trim();
+    if (!/^\d+$/.test(trimmed)) return { ok: false, error: 'Enter a whole number.' };
+    const number = Number(trimmed);
+    if (number < schema.min || number > schema.max) {
+      return { ok: false, error: `Enter a number between ${schema.min} and ${schema.max}.` };
+    }
+    return { ok: true, value: String(number) };
   }
 
   return { ok: true, value: rawInput };
@@ -142,6 +167,7 @@ module.exports = {
                 ON CONFLICT(config_name) DO UPDATE SET value = excluded.value`,
           args: [key, result.value],
         });
+        await loadSettings();
 
         const updatedValues = await fetchAllConfig();
         await panel.edit({ components: [buildContainer(updatedValues)], flags: MessageFlags.IsComponentsV2 });

@@ -7,8 +7,9 @@ const { resolveTarget } = require('./targetResolver');
 const { parseDuration } = require('./durationParser');
 const { setStatus } = require('./reactionStatus');
 const { runBanFlow } = require('./banFlow');
-const { PermissionError, ValidationError, NoTargetError } = require('./errors');
+const { PermissionError, ValidationError, NoTargetError, UsageError } = require('./errors');
 const { randomTitle } = require('./powerFlexTitles');
+const { buildUsageEmbed } = require('./usageEmbed');
 
 const { muteUser, MAX_TIMEOUT_SECONDS } = require('../moderation/muteUser');
 const { unbanUser } = require('../moderation/unbanUser');
@@ -129,7 +130,7 @@ async function runNativeCommand(message, client, commandName, args, prefix) {
   }
 }
 
-async function runTextCommand(message, command, args) {
+async function runTextCommand(message, command, args, prefix) {
   await setStatus(message, 'loading');
 
   try {
@@ -143,7 +144,10 @@ async function runTextCommand(message, command, args) {
     await command.execute(message, args);
     await setStatus(message, 'success');
   } catch (err) {
-    if (err instanceof PermissionError || err instanceof ValidationError) {
+    if (err instanceof UsageError) {
+      await setStatus(message, 'failure');
+      await message.reply({ embeds: [buildUsageEmbed(err, prefix)] });
+    } else if (err instanceof PermissionError || err instanceof ValidationError) {
       await setStatus(message, 'failure');
       await message.reply(err.message);
     } else {
@@ -175,7 +179,7 @@ async function handleMessage(message, client) {
 
   const textMatch = findTextCommand(client, tokens);
   if (textMatch) {
-    await runTextCommand(message, textMatch.command, tokens.slice(textMatch.consumed));
+    await runTextCommand(message, textMatch.command, tokens.slice(textMatch.consumed), matchedPrefix);
   }
 }
 

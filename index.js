@@ -7,6 +7,7 @@ const coordDb = require('./db/coordinationClient');
 const { loadResponders } = require('./autoresponders/autoresponder');
 const { deployMissingCommands } = require('./core/commandDeploy');
 const { seedPermissionRows } = require('./core/permSeeder');
+const { loadSettings } = require('./economy/gambling/settings');
 require('./ping');
 
 const client = new Client({
@@ -39,6 +40,9 @@ function loadTextCommands() {
     const command = require(path.join(dir, file));
     if (command?.name) {
       client.textCommands.set(command.name, command);
+      for (const alias of command.aliases ?? []) {
+        client.textCommands.set(alias.toLowerCase(), command);
+      }
     }
   }
 }
@@ -60,6 +64,7 @@ function loadEvents() {
   if (config.tursoCoord.url) {
     await coordDb.initSchema();
   }
+  await loadSettings();
 
   loadSlashCommands();
   loadTextCommands();

@@ -12,6 +12,14 @@ const slashSections = [
     ],
   },
   {
+    category: 'Economy',
+    commands: [
+      { usage: '/collect', description: 'Collect your role payout. Resets at 00:00 GMT.' },
+      { usage: '/balance (user)', description: 'View Shards and Gems.' },
+      { usage: '/leaderboard (type)', description: 'View the top players by Shards, Gems or game winnings.' },
+    ],
+  },
+  {
     category: 'Confessions',
     commands: [{ usage: '/confess <confession>', description: 'Send an anonymous numbered confession.' }],
   },
@@ -53,6 +61,19 @@ const textSections = [
       { usage: 'unmute <user> <reason>', description: 'Remove a timeout.' },
       { usage: 'kick <user> <reason>', description: 'Kick a user.' },
       { usage: 'warn <user> <duration> <reason>', description: 'Warn a user.' },
+    ],
+  },
+  {
+    category: 'Gambling',
+    commands: [
+      {
+        usage: 'coinflip <heads|tails> <bet>  (alias: cf)',
+        description: 'Flip a coin. Win double your bet or lose it. Bet accepts numbers, 2k style, or all.',
+      },
+      {
+        usage: 'snailgarden <bet> (tiles)  (alias: sg)',
+        description: 'Plant tiles for a growing payout. 4 to 20 tiles, default 10. Cash out any time after the first tile.',
+      },
     ],
   },
   {

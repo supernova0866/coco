@@ -1,5 +1,6 @@
 const { createClient } = require('@libsql/client');
 const config = require('../config');
+const { ITEMS } = require('../economy/currency/items');
 
 const client = createClient({
   url: config.turso.url,
@@ -139,6 +140,38 @@ async function initSchema() {
     position INTEGER NOT NULL,
     created_at INTEGER NOT NULL
   )`);
+
+  await client.execute(`CREATE TABLE IF NOT EXISTS economy_users (
+    user_id TEXT PRIMARY KEY,
+    shards INTEGER NOT NULL DEFAULT 0,
+    gems INTEGER NOT NULL DEFAULT 0,
+    last_claim_day INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL
+  )`);
+
+  for (const item of ITEMS) {
+    await ensureColumn('economy_users', item.key, 'INTEGER NOT NULL DEFAULT 0');
+  }
+
+  await client.execute(`CREATE TABLE IF NOT EXISTS economy_stats (
+    user_id TEXT NOT NULL,
+    game TEXT NOT NULL,
+    wins INTEGER NOT NULL DEFAULT 0,
+    losses INTEGER NOT NULL DEFAULT 0,
+    wagered INTEGER NOT NULL DEFAULT 0,
+    net INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (user_id, game)
+  )`);
+
+  await client.execute(`CREATE TABLE IF NOT EXISTS role_payouts (
+    role_id TEXT PRIMARY KEY,
+    shards INTEGER NOT NULL DEFAULT 0,
+    gems INTEGER NOT NULL DEFAULT 0
+  )`);
+
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_economy_users_shards ON economy_users (shards DESC)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_economy_users_gems ON economy_users (gems DESC)');
+  await client.execute('CREATE INDEX IF NOT EXISTS idx_economy_stats_game_net ON economy_stats (game, net DESC)');
 }
 
-module.exports = { client, initSchema };
+module.exports = { client, initSchema, ensureColumn };

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { runActionList } = require('../actiongates/actions');
+const { matchesChannel } = require('./channelMatch');
 
 let loadedResponders = [];
 
@@ -37,7 +38,7 @@ function getResponderByName(name) {
 
 async function evaluateAutoresponders(msg) {
   for (const responder of loadedResponders) {
-    if (responder.channels && !responder.channels.includes(msg.channel.id)) continue;
+    if (!matchesChannel(msg, responder.channels)) continue;
     if (matchesTrigger(msg, responder.match)) {
       const { deleted } = await runActionList(msg, responder.actions);
       return { matched: true, deleted };

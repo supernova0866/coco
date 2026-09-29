@@ -34,6 +34,14 @@ const slashSections = [
     ],
   },
   {
+    category: 'Snippets',
+    commands: [
+      { usage: '/snippets add', description: 'Add a new auto-reply snippet (exact-match trigger).' },
+      { usage: '/snippets view (id)', description: 'Browse snippets, or view and edit one in detail.' },
+      { usage: '/snippets remove <id>', description: 'Remove a snippet.' },
+    ],
+  },
+  {
     category: 'Persona & Presence',
     commands: [
       { usage: '/personas switch <name>', description: 'Switch the bot persona.' },

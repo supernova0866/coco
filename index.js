@@ -5,6 +5,7 @@ const config = require('./config');
 const mainDb = require('./db/client');
 const coordDb = require('./db/coordinationClient');
 const { loadResponders } = require('./autoresponders/autoresponder');
+const { reloadSnippetCache } = require('./snippets/snippetCache');
 const { deployMissingCommands } = require('./core/commandDeploy');
 const { seedPermissionRows } = require('./core/permSeeder');
 const { loadSettings } = require('./economy/gambling/settings');
@@ -70,6 +71,7 @@ function loadEvents() {
   loadTextCommands();
   loadEvents();
   loadResponders();
+  await reloadSnippetCache();
 
   await seedPermissionRows(client);
   await deployMissingCommands(client);

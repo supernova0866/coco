@@ -39,6 +39,16 @@ async function initSchema() {
     created_at INTEGER
   )`);
 
+  await client.execute(`CREATE TABLE IF NOT EXISTS snippets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    scope_ids TEXT NOT NULL,
+    triggers TEXT NOT NULL,
+    message TEXT NOT NULL,
+    is_embed INTEGER NOT NULL DEFAULT 0,
+    created_by TEXT,
+    created_at INTEGER
+  )`);
+
   await client.execute(`CREATE TABLE IF NOT EXISTS confessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     author_id TEXT,

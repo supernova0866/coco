@@ -33,9 +33,16 @@ function splitFirstUnquoted(str, delimiter) {
   return [str.trim(), ''];
 }
 
+function stripSurroundingQuotes(str) {
+  if (str.length >= 2 && str.startsWith('"') && str.endsWith('"')) {
+    return str.slice(1, -1);
+  }
+  return str;
+}
+
 function parseDirective(token) {
   const [type, rest] = splitFirstUnquoted(token, '+');
-  return { type, rest };
+  return { type, rest: stripSurroundingQuotes(rest) };
 }
 
 module.exports = { splitQuoted, splitFirstUnquoted, parseDirective };

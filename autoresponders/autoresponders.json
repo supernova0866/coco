@@ -1,6 +1,6 @@
 {
   "responders": [
     { "path": "helloTrigger.js", "enabled": false },
-    { "path": "ruleBreak.js", "enabled": true }
+    { "path": "ruleBreak.js", "enabled": false }
   ]
 }
